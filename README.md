@@ -125,6 +125,9 @@ Recebe a definição completa do workflow e persiste no banco.
 - `id`, `name` e `startBlockId` são obrigatórios
 - A lista de `blocks` não pode ser vazia
 - O `startBlockId` deve referenciar um `id` existente na lista de blocks
+- Os `id` dos blocks não podem se repetir no mesmo payload
+- Nenhum `id` de block enviado pode já existir no banco (validação em batch antes do save)
+- O `id` do flow não pode já existir no banco
 
 ---
 
@@ -154,6 +157,8 @@ Busca o flow salvo e executa a engine com as variáveis de entrada fornecidas.
 |---|---|
 | Campo obrigatório ausente ou inválido | `400 Bad Request` |
 | Flow com o mesmo `id` já cadastrado | `409 Conflict` |
+| Block com o mesmo `id` já cadastrado | `409 Conflict` |
+| IDs de blocks duplicados no payload | `422 Unprocessable Entity` |
 | `flowId` não encontrado no banco | `404 Not Found` |
 | `startBlockId` não existe nos blocks | `422 Unprocessable Entity` |
 | Erro inesperado | `500 Internal Server Error` |

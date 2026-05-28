@@ -11,6 +11,7 @@ import com.flownocode.api.engine.WorkflowEngine;
 import com.flownocode.api.exception.BusinessException;
 import com.flownocode.api.exception.DuplicateResourceException;
 import com.flownocode.api.exception.ResourceNotFoundException;
+import com.flownocode.api.repository.BlockRepository;
 import com.flownocode.api.repository.FlowRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,18 +19,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class FlowService {
 
     private final FlowRepository flowRepository;
+    private final BlockRepository blockRepository;
     private final WorkflowEngine workflowEngine;
 
     @Transactional
     public FlowResponse create(CreateFlowRequest request) {
         validateFlowDoesNotExist(request.getId());
+        validateNoDuplicateBlockIdsInRequest(request);
+        validateNoExistingBlockIdsInDatabase(request);
         validateStartBlockExists(request);
 
         Flow flow = toEntity(request);
@@ -44,6 +50,22 @@ public class FlowService {
         }
     }
 
+    private void validateNoDuplicateBlockIdsInRequest(CreateFlowRequest request) {
+        List<UUID> blockIds = extractBlockIds(request);
+
+        if (blockIds.size() != Set.copyOf(blockIds).size()) {
+            throw new BusinessException("Duplicate block ids in request");
+        }
+    }
+
+    private void validateNoExistingBlockIdsInDatabase(CreateFlowRequest request) {
+        List<UUID> blockIds = extractBlockIds(request);
+
+        if (blockRepository.existsByIdIn(blockIds)) {
+            throw new DuplicateResourceException("One or more blocks already exist");
+        }
+    }
+
     private void validateStartBlockExists(CreateFlowRequest request) {
         boolean exists = request.getBlocks().stream()
                 .anyMatch(block -> block.getId().equals(request.getStartBlockId()));
@@ -51,6 +73,12 @@ public class FlowService {
         if (!exists) {
             throw new BusinessException("startBlockId does not match any block id in the blocks list");
         }
+    }
+
+    private List<UUID> extractBlockIds(CreateFlowRequest request) {
+        return request.getBlocks().stream()
+                .map(CreateBlockRequest::getId)
+                .collect(Collectors.toList());
     }
 
     private Flow toEntity(CreateFlowRequest request) {
