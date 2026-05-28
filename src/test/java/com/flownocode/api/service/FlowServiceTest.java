@@ -10,6 +10,7 @@ import com.flownocode.api.dto.response.FlowResponse;
 import com.flownocode.api.engine.ExecutionContext;
 import com.flownocode.api.engine.WorkflowEngine;
 import com.flownocode.api.exception.BusinessException;
+import com.flownocode.api.exception.DuplicateResourceException;
 import com.flownocode.api.exception.ResourceNotFoundException;
 import com.flownocode.api.repository.FlowRepository;
 import org.junit.jupiter.api.Test;
@@ -66,12 +67,24 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldThrowDuplicateResourceExceptionWhenFlowAlreadyExists() {
+        UUID flowId = UUID.randomUUID();
+        UUID blockId = UUID.randomUUID();
+
+        CreateFlowRequest request = createFlowRequest(flowId, blockId, blockId);
+        when(flowRepository.existsById(flowId)).thenReturn(true);
+
+        assertThrows(DuplicateResourceException.class, () -> flowService.create(request));
+    }
+
+    @Test
     void shouldThrowBusinessExceptionWhenStartBlockIdDoesNotMatchAnyBlock() {
         UUID flowId = UUID.randomUUID();
         UUID blockId = UUID.randomUUID();
         UUID wrongStartBlockId = UUID.randomUUID();
 
         CreateFlowRequest request = createFlowRequest(flowId, blockId, wrongStartBlockId);
+        when(flowRepository.existsById(flowId)).thenReturn(false);
 
         assertThrows(BusinessException.class, () -> flowService.create(request));
     }
