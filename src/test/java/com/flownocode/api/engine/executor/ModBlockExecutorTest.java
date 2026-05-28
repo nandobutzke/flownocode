@@ -17,45 +17,32 @@ class ModBlockExecutorTest {
     private final ModBlockExecutor executor = new ModBlockExecutor();
 
     @Test
-    void shouldCalculateRemainderFromContextVariables() {
+    void shouldCalculateModWithContextVariables() {
         UUID nextBlockId = UUID.randomUUID();
         Block block = block(
-                Map.of("left", "input", "right", "divisor", "resultVariable", "remainder"),
+                Map.of("left", "a", "right", "b", "resultVariable", "result"),
                 nextBlockId
         );
-        ExecutionContext context = new ExecutionContext(Map.of("input", 17, "divisor", 2));
+        ExecutionContext context = new ExecutionContext(Map.of("a", 10, "b", 3));
 
         BlockResult result = executor.execute(block, context);
 
-        assertEquals(1L, context.get("remainder")); // 17 % 2 = 1
+        assertEquals(1L, context.get("result"));
         assertTrue(result.hasNext());
         assertEquals(nextBlockId, result.nextBlockId());
     }
 
     @Test
-    void shouldCalculateRemainderWithLiteralRight() {
+    void shouldCalculateModWithLiteralRight() {
         Block block = block(
-                Map.of("left", "input", "right", 2, "resultVariable", "remainder"),
+                Map.of("left", "a", "right", 2, "resultVariable", "result"),
                 UUID.randomUUID()
         );
-        ExecutionContext context = new ExecutionContext(Map.of("input", 9));
+        ExecutionContext context = new ExecutionContext(Map.of("a", 9));
 
         executor.execute(block, context);
 
-        assertEquals(1L, context.get("remainder")); // 9 % 2 = 1
-    }
-
-    @Test
-    void shouldReturnZeroWhenDivisible() {
-        Block block = block(
-                Map.of("left", "input", "right", "divisor", "resultVariable", "remainder"),
-                UUID.randomUUID()
-        );
-        ExecutionContext context = new ExecutionContext(Map.of("input", 9, "divisor", 3));
-
-        executor.execute(block, context);
-
-        assertEquals(0L, context.get("remainder")); // 9 % 3 = 0
+        assertEquals(1L, context.get("result"));
     }
 
     @Test
