@@ -19,8 +19,12 @@ class IncrementBlockExecutorTest {
     @Test
     void shouldIncrementVariableByOne() {
         UUID nextBlockId = UUID.randomUUID();
+
         Block block = block("counter", nextBlockId);
-        ExecutionContext context = new ExecutionContext(Map.of("counter", 2));
+
+        ExecutionContext context = new ExecutionContext(Map.of(
+                "counter", 2
+        ));
 
         BlockResult result = executor.execute(block, context);
 
@@ -39,7 +43,9 @@ class IncrementBlockExecutorTest {
         block.setId(UUID.randomUUID());
         block.setType(BlockType.INCREMENT);
         block.setNextBlockId(nextBlockId);
-        block.setConfig(Map.of("variable", variable));
+        block.setConfig(Map.of(
+                "variable", variable
+        ));
         return block;
     }
 }

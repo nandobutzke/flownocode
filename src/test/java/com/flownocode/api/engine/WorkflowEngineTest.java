@@ -41,12 +41,17 @@ class WorkflowEngineTest {
         setBlock.setId(setBlockId);
         setBlock.setType(BlockType.SET_VARIABLE);
         setBlock.setNextBlockId(endBlockId);
-        setBlock.setConfig(Map.of("variable", "counter", "value", 10));
+        setBlock.setConfig(Map.of(
+                "variable", "counter",
+                "value", 10
+        ));
 
         Block endBlock = new Block();
         endBlock.setId(endBlockId);
         endBlock.setType(BlockType.END);
-        endBlock.setConfig(Map.of("result", true));
+        endBlock.setConfig(Map.of(
+                "result", true
+        ));
 
         flow.getBlocks().addAll(List.of(setBlock, endBlock));
 

@@ -47,7 +47,9 @@ class EndBlockExecutorTest {
         Block block = new Block();
         block.setId(UUID.randomUUID());
         block.setType(BlockType.END);
-        block.setConfig(Map.of("result", result));
+        block.setConfig(Map.of(
+                "result", result
+        ));
         return block;
     }
 }
