@@ -2,7 +2,7 @@
 
 API REST de **Workflow Engine** desenvolvida em Java 17 com Spring Boot 3.
 
-A proposta central do projeto é permitir que um fluxo de execução lógica seja descrito como dados — um JSON — e executado dinamicamente pela engine, sem necessidade de escrever código novo para cada lógica de negócio.
+A proposta central do projeto é permitir que um fluxo de execução lógica seja descrito como dados — um JSON — e executado dinamicamente pela engine.
 
 ---
 
