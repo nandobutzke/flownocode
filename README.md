@@ -10,8 +10,17 @@ A proposta central do projeto é permitir que um fluxo de execução lógica sej
 
 > **Pré-requisitos:** Docker e Docker Compose instalados.
 
+O `docker-compose.yml` sobe **dois serviços** juntos — não é necessário rodar a API manualmente:
+
+| Serviço | Container | Descrição |
+|---|---|---|
+| `api` | `flownocode-api` | API Java 17 + Spring Boot 3 (build via `docker/api/Dockerfile`, porta `8080`) |
+| `postgres` | `flownocode-postgres` | PostgreSQL 16 (porta `5432`, volume persistente) |
+
+A API usa o profile `docker` (`application-docker.yml`) e só inicia depois que o Postgres estiver saudável (`depends_on` + healthcheck).
+
 ```bash
-# Subir a API + PostgreSQL com um único comando
+# Subir API + PostgreSQL com um único comando
 docker compose up --build
 ```
 
@@ -21,6 +30,12 @@ Aguarde o build da imagem e a mensagem `Started FlowNoCodeApplication`. A API es
 |---|---|
 | `http://localhost:8080/swagger-ui.html` | Documentação interativa (Swagger) |
 | `http://localhost:8080/api-docs` | Spec OpenAPI em JSON |
+
+Para parar os containers:
+
+```bash
+docker compose down
+```
 
 > Para rodar **sem Docker** (banco H2 em memória, zero configuração):
 > ```bash
@@ -172,16 +187,6 @@ Busca o flow salvo e executa a engine com as variáveis de entrada fornecidas.
 }
 ```
 
----
-
-## O que é uma Workflow Engine?
-
-Uma workflow engine é um sistema que executa fluxos de trabalho definidos como uma sequência de blocos (passos). Cada bloco tem um tipo (ex: `SET_VARIABLE`, `CONDITION`, `MOD`) e sabe qual bloco executar depois de si.
-
-**Analogia simples:** pense num fluxograma do Visio ou do Miro. Cada caixinha é um bloco, as setas são os `nextBlockId`, e a engine percorre esse fluxograma automaticamente, executando a lógica de cada caixinha.
-
----
-
 ## Stack de tecnologias
 
 | Tecnologia | Versão | Informações |
@@ -201,6 +206,12 @@ Uma workflow engine é um sistema que executa fluxos de trabalho definidos como 
 ## Estrutura do projeto
 
 ```
+docker/
+├── api/Dockerfile      → Build multi-stage da API (Java 17 + Spring Boot 3)
+└── postgres/Dockerfile → Imagem do PostgreSQL 16
+
+docker-compose.yml      → Serviços `api` e `postgres`
+
 src/main/java/com/flownocode/api/
 │
 ├── controller/         → Endpoints REST (entrada da API)
@@ -436,21 +447,20 @@ retorna true  (não encontrou divisor → é primo)
 
 ---
 
-## Decisões de arquitetura (resumo para apresentação)
+## Decisões de arquitetura (resumo)
 
-| Decisão | Alternativa descartada | Por quê a decisão tomada é melhor |
+| Decisão | Alternativa descartada | Motivo da decisão |
 |---|---|---|
 | ID definido pelo cliente | Auto-gerado pelo banco | Permite referenciar blocos entre si em uma única requisição |
 | `config` como JSON livre | Uma coluna por parâmetro | Schema flexível; novos tipos de bloco não alteram o banco |
-| Strategy Pattern por tipo de bloco | `if/else` na engine | Adicionar novo bloco = criar uma classe, não alterar código existente |
+| Strategy Pattern por tipo de bloco | `if/else` na engine | Cada executor tem uma única responsabilidade; adicionar bloco = nova classe, sem alterar a engine (SRP + Open/Closed) |
 | Registry com injeção de lista | Switch manual | O Spring descobre os executores automaticamente; zero acoplamento |
-| H2 em memória (desenvolvimento) | PostgreSQL local | Zero configuração; sobe e testa sem Docker |
-| `@Transactional(readOnly=true)` na execução | Sem transação | Mantém sessão JPA aberta para carregar a lista lazy de blocks |
+| H2 (dev local) + Docker Compose (API + PostgreSQL) | PostgreSQL instalado localmente | Ambiente dev rápido com H2 via mvn spring-boot:run; ambiente completo com API + Postgres via docker compose up --build |
 | `BaseEntity` com `@MappedSuperclass` | Repetir campos em cada entidade | `id`, `createdAt`, `updatedAt` em um só lugar |
 
 ---
 
-## Estrutura de testes (preparada para implementação)
+## Estrutura de testes
 
 ```
 src/test/java/com/flownocode/api/
