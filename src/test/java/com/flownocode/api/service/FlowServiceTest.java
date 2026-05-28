@@ -53,8 +53,8 @@ class FlowServiceTest {
         UUID blockId = UUID.randomUUID();
 
         CreateFlowRequest request = createFlowRequest(flowId, blockId, blockId);
-
         Flow savedFlow = buildFlow(flowId, blockId);
+
         when(flowRepository.save(any(Flow.class))).thenReturn(savedFlow);
 
         FlowResponse response = flowService.create(request);
@@ -94,7 +94,9 @@ class FlowServiceTest {
             return ctx;
         }).when(workflowEngine).run(any(Flow.class), any(ExecutionContext.class));
 
-        FlowExecutionResponse response = flowService.execute(flowId, Map.of("value", 10));
+        FlowExecutionResponse response = flowService.execute(flowId, Map.of(
+                "value", 10
+        ));
 
         assertNotNull(response);
         assertEquals(flowId, response.getFlowId());
@@ -105,10 +107,13 @@ class FlowServiceTest {
     @Test
     void shouldThrowResourceNotFoundWhenFlowDoesNotExist() {
         UUID flowId = UUID.randomUUID();
+
         when(flowRepository.findById(flowId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> flowService.execute(flowId, Map.of("value", 10)));
+                () -> flowService.execute(flowId, Map.of(
+                        "value", 10
+                )));
     }
 
     // -------------------------------------------------------------------------
@@ -119,7 +124,9 @@ class FlowServiceTest {
         CreateBlockRequest blockRequest = new CreateBlockRequest();
         blockRequest.setId(blockId);
         blockRequest.setType(BlockType.END);
-        blockRequest.setConfig(Map.of("result", true));
+        blockRequest.setConfig(Map.of(
+                "result", true
+        ));
 
         CreateFlowRequest request = new CreateFlowRequest();
         request.setId(flowId);
@@ -133,7 +140,9 @@ class FlowServiceTest {
         Block block = new Block();
         block.setId(blockId);
         block.setType(BlockType.END);
-        block.setConfig(Map.of("result", true));
+        block.setConfig(Map.of(
+                "result", true
+        ));
 
         Flow flow = new Flow();
         flow.setId(flowId);

@@ -19,10 +19,12 @@ class SetVariableBlockExecutorTest {
     @Test
     void shouldSetVariableInContextAndReturnNextBlock() {
         UUID nextBlockId = UUID.randomUUID();
+
         Block block = block(Map.of(
-            "variable", "counter", 
-            "value", 10
+                "variable", "counter",
+                "value", 10
         ), nextBlockId);
+
         ExecutionContext context = new ExecutionContext(Map.of());
 
         BlockResult result = executor.execute(block, context);
@@ -35,10 +37,13 @@ class SetVariableBlockExecutorTest {
     @Test
     void shouldOverwriteExistingVariableInContext() {
         Block block = block(Map.of(
-            "variable", "counter", 
-            "value", 10
+                "variable", "counter",
+                "value", 10
         ), UUID.randomUUID());
-        ExecutionContext context = new ExecutionContext(Map.of("counter", 5));
+
+        ExecutionContext context = new ExecutionContext(Map.of(
+                "counter", 5
+        ));
 
         executor.execute(block, context);
 

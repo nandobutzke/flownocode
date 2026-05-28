@@ -19,11 +19,17 @@ class ModBlockExecutorTest {
     @Test
     void shouldCalculateModWithContextVariables() {
         UUID nextBlockId = UUID.randomUUID();
-        Block block = block(
-                Map.of("left", "a", "right", "b", "resultVariable", "result"),
-                nextBlockId
-        );
-        ExecutionContext context = new ExecutionContext(Map.of("a", 10, "b", 3));
+
+        Block block = block(Map.of(
+                "left", "a",
+                "right", "b",
+                "resultVariable", "result"
+        ), nextBlockId);
+
+        ExecutionContext context = new ExecutionContext(Map.of(
+                "a", 10,
+                "b", 3
+        ));
 
         BlockResult result = executor.execute(block, context);
 
@@ -34,11 +40,15 @@ class ModBlockExecutorTest {
 
     @Test
     void shouldCalculateModWithLiteralRight() {
-        Block block = block(
-                Map.of("left", "a", "right", 2, "resultVariable", "result"),
-                UUID.randomUUID()
-        );
-        ExecutionContext context = new ExecutionContext(Map.of("a", 9));
+        Block block = block(Map.of(
+                "left", "a",
+                "right", 2,
+                "resultVariable", "result"
+        ), UUID.randomUUID());
+
+        ExecutionContext context = new ExecutionContext(Map.of(
+                "a", 9
+        ));
 
         executor.execute(block, context);
 
