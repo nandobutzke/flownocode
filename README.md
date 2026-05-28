@@ -24,7 +24,7 @@ Aguarde o build da imagem e a mensagem `Started FlowNoCodeApplication`. A API es
 
 > Para rodar **sem Docker** (banco H2 em memória, zero configuração):
 > ```bash
-> ./mvnw spring-boot:run
+> mvn spring-boot:run
 > ```
 > Também disponibiliza o console H2 em `http://localhost:8080/h2-console`.
 
