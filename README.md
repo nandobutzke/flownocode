@@ -184,16 +184,16 @@ Uma workflow engine é um sistema que executa fluxos de trabalho definidos como 
 
 ## Stack de tecnologias
 
-| Tecnologia | Versão | Por quê foi escolhida |
+| Tecnologia | Versão | Informações |
 |---|---|---|
-| Java | 17 | LTS estável, com records, sealed classes e switch expressions modernos |
+| Java | 17 | LTS estável |
 | Spring Boot | 3.3 | Framework padrão de mercado para APIs REST em Java |
 | Spring Data JPA + Hibernate | 3.3 | ORM para persistir o modelo de domínio sem SQL manual |
 | H2 Database | runtime | Banco em memória — zero configuração para rodar e testar localmente |
-| PostgreSQL | 16 | Banco de produção, configurado via Docker Compose |
+| PostgreSQL | 16 | Banco de dados configurado via Docker Compose |
 | Lombok | latest | Elimina boilerplate de getters, setters e construtores |
 | springdoc-openapi | 2.5 | Gera documentação Swagger automaticamente a partir do código |
-| JUnit 5 + Mockito | via Spring | Testes unitários e de integração |
+| JUnit 5 + Mockito | via Spring | Testes |
 
 ---
 
