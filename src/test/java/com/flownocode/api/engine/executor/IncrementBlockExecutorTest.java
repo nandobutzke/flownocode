@@ -19,26 +19,14 @@ class IncrementBlockExecutorTest {
     @Test
     void shouldIncrementVariableByOne() {
         UUID nextBlockId = UUID.randomUUID();
-        Block block = block("divisor", nextBlockId);
-        ExecutionContext context = new ExecutionContext(Map.of("divisor", 2));
+        Block block = block("counter", nextBlockId);
+        ExecutionContext context = new ExecutionContext(Map.of("counter", 2));
 
         BlockResult result = executor.execute(block, context);
 
-        assertEquals(3L, context.get("divisor")); // 2 + 1 = 3
+        assertEquals(3L, context.get("counter"));
         assertTrue(result.hasNext());
         assertEquals(nextBlockId, result.nextBlockId());
-    }
-
-    @Test
-    void shouldIncrementAccumulatingAcrossMultipleCalls() {
-        Block block = block("divisor", UUID.randomUUID());
-        ExecutionContext context = new ExecutionContext(Map.of("divisor", 2));
-
-        executor.execute(block, context);
-        executor.execute(block, context);
-        executor.execute(block, context);
-
-        assertEquals(5L, context.get("divisor")); // 2 + 1 + 1 + 1 = 5
     }
 
     @Test

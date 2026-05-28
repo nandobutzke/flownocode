@@ -108,7 +108,7 @@ class FlowServiceTest {
             return ctx;
         }).when(workflowEngine).run(any(Flow.class), any(ExecutionContext.class));
 
-        FlowExecutionResponse response = flowService.execute(flowId, Map.of("input", 17));
+        FlowExecutionResponse response = flowService.execute(flowId, Map.of("value", 10));
 
         assertNotNull(response);
         assertEquals(flowId, response.getFlowId());
@@ -122,7 +122,7 @@ class FlowServiceTest {
         when(flowRepository.findById(flowId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> flowService.execute(flowId, Map.of("input", 17)));
+                () -> flowService.execute(flowId, Map.of("value", 10)));
     }
 
     // -------------------------------------------------------------------------
