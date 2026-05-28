@@ -9,6 +9,7 @@ import com.flownocode.api.dto.response.FlowResponse;
 import com.flownocode.api.engine.ExecutionContext;
 import com.flownocode.api.engine.WorkflowEngine;
 import com.flownocode.api.exception.BusinessException;
+import com.flownocode.api.exception.DuplicateResourceException;
 import com.flownocode.api.exception.ResourceNotFoundException;
 import com.flownocode.api.repository.FlowRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +29,19 @@ public class FlowService {
 
     @Transactional
     public FlowResponse create(CreateFlowRequest request) {
+        validateFlowDoesNotExist(request.getId());
         validateStartBlockExists(request);
 
         Flow flow = toEntity(request);
         Flow saved = flowRepository.save(flow);
 
         return toResponse(saved);
+    }
+
+    private void validateFlowDoesNotExist(UUID flowId) {
+        if (flowRepository.existsById(flowId)) {
+            throw new DuplicateResourceException("Flow", flowId);
+        }
     }
 
     private void validateStartBlockExists(CreateFlowRequest request) {
@@ -92,7 +100,7 @@ public class FlowService {
                 .name(flow.getName())
                 .startBlockId(flow.getStartBlockId())
                 .blockCount(flow.getBlocks().size())
-                .createdAt(flow.getCreatedAt())
+                .createdAt(flow.getCreatedAt() != null ? flow.getCreatedAt() : flow.getUpdatedAt())
                 .build();
     }
 }
