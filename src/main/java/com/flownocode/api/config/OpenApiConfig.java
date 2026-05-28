@@ -15,9 +15,6 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("Flow No Code API")
                         .description("Workflow Engine - Technical Challenge")
-                        .version("v1")
-                        .contact(new Contact()
-                                .name("Flow No Code")
-                                .email("contact@flownocode.com")));
+                        .version("v1"));
     }
 }

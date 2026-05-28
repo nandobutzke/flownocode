@@ -6,6 +6,169 @@ A proposta central do projeto é permitir que um fluxo de execução lógica sej
 
 ---
 
+## Inicialização com Docker
+
+> **Pré-requisitos:** Docker e Docker Compose instalados.
+
+```bash
+# Subir a API + PostgreSQL com um único comando
+docker compose up --build
+```
+
+Aguarde o build da imagem e a mensagem `Started FlowNoCodeApplication`. A API estará disponível em:
+
+| URL | O que é |
+|---|---|
+| `http://localhost:8080/swagger-ui.html` | Documentação interativa (Swagger) |
+| `http://localhost:8080/api-docs` | Spec OpenAPI em JSON |
+
+> Para rodar **sem Docker** (banco H2 em memória, zero configuração):
+> ```bash
+> ./mvnw spring-boot:run
+> ```
+> Também disponibiliza o console H2 em `http://localhost:8080/h2-console`.
+
+---
+
+## Endpoints
+
+### `POST /flows` — Criar um flow
+
+Recebe a definição completa do workflow e persiste no banco.
+
+**Request body:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Prime Number Validation Flow",
+  "startBlockId": "11111111-1111-1111-1111-111111111111",
+  "blocks": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "type": "SET_VARIABLE",
+      "nextBlockId": "22222222-2222-2222-2222-222222222222",
+      "config": {
+        "variable": "divisor",
+        "value": 2
+      }
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "type": "MOD",
+      "nextBlockId": "33333333-3333-3333-3333-333333333333",
+      "config": {
+        "left": "input",
+        "right": "divisor",
+        "resultVariable": "remainder"
+      }
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333333333",
+      "type": "CONDITION",
+      "config": {
+        "left": "remainder",
+        "operator": "==",
+        "right": 0,
+        "trueNextBlockId": "44444444-4444-4444-4444-444444444444",
+        "falseNextBlockId": "55555555-5555-5555-5555-555555555555"
+      }
+    },
+    {
+      "id": "44444444-4444-4444-4444-444444444444",
+      "type": "END",
+      "config": {
+        "result": false
+      }
+    },
+    {
+      "id": "55555555-5555-5555-5555-555555555555",
+      "type": "INCREMENT",
+      "nextBlockId": "66666666-6666-6666-6666-666666666666",
+      "config": {
+        "variable": "divisor"
+      }
+    },
+    {
+      "id": "66666666-6666-6666-6666-666666666666",
+      "type": "CONDITION",
+      "config": {
+        "left": "divisor",
+        "operator": "<",
+        "right": "input",
+        "trueNextBlockId": "22222222-2222-2222-2222-222222222222",
+        "falseNextBlockId": "77777777-7777-7777-7777-777777777777"
+      }
+    },
+    {
+      "id": "77777777-7777-7777-7777-777777777777",
+      "type": "END",
+      "config": {
+        "result": true
+      }
+    }
+  ]
+}
+```
+
+**Resposta de sucesso — `201 Created`:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Prime Number Validation Flow",
+  "startBlockId": "11111111-1111-1111-1111-111111111111",
+  "blockCount": 7,
+  "createdAt": "2026-05-27T00:00:00"
+}
+```
+
+**Validações:**
+- `id`, `name` e `startBlockId` são obrigatórios
+- A lista de `blocks` não pode ser vazia
+- O `startBlockId` deve referenciar um `id` existente na lista de blocks
+
+---
+
+### `POST /flows/{flowId}/execute` — Executar um flow
+
+Busca o flow salvo e executa a engine com as variáveis de entrada fornecidas.
+
+**Request body:**
+```json
+{
+  "input": 4
+}
+```
+
+**Resposta de sucesso — `200 OK`:**
+```json
+{
+  "flowId": "550e8400-e29b-41d4-a716-446655440000",
+  "flowName": "Prime Number Validation Flow",
+  "output": { "result": false }
+}
+```
+
+**Tratamento de erros:**
+
+| Situação | HTTP |
+|---|---|
+| Campo obrigatório ausente ou inválido | `400 Bad Request` |
+| Flow com o mesmo `id` já cadastrado | `409 Conflict` |
+| `flowId` não encontrado no banco | `404 Not Found` |
+| `startBlockId` não existe nos blocks | `422 Unprocessable Entity` |
+| Erro inesperado | `500 Internal Server Error` |
+
+```json
+{
+  "status": 404,
+  "error": "Not Found",
+  "message": "Flow not found with id: 550e8400-...",
+  "timestamp": "2026-05-27T00:00:00"
+}
+```
+
+---
+
 ## O que é uma Workflow Engine?
 
 Uma workflow engine é um sistema que executa fluxos de trabalho definidos como uma sequência de blocos (passos). Cada bloco tem um tipo (ex: `SET_VARIABLE`, `CONDITION`, `MOD`) e sabe qual bloco executar depois de si.
@@ -29,30 +192,6 @@ Uma workflow engine é um sistema que executa fluxos de trabalho definidos como 
 
 ---
 
-## Como rodar o projeto
-
-### Pré-requisito
-Apenas Java 17 instalado. Não precisa de banco, Docker, nem nada externo.
-
-```bash
-# Entrar na pasta do projeto
-cd challenge-dev-flow
-
-# Rodar a aplicação
-./mvnw spring-boot:run
-```
-
-A aplicação sobe em `http://localhost:8080` com banco H2 em memória — o schema é criado automaticamente pelo Hibernate ao iniciar.
-
-### URLs disponíveis ao subir
-
-| URL | O que é |
-|---|---|
-| `http://localhost:8080/swagger-ui.html` | Documentação interativa (Swagger) |
-| `http://localhost:8080/h2-console` | Console visual do banco em memória |
-| `http://localhost:8080/api-docs` | Spec OpenAPI em JSON |
-
----
 
 ## Estrutura do projeto
 
@@ -190,7 +329,7 @@ Isso viola o **Princípio Aberto/Fechado** (Open/Closed Principle do SOLID): cad
 // ✅ O que foi feito
 public interface BlockExecutor {
     BlockResult execute(Block block, ExecutionContext context);
-    BlockType supports(); // "eu sou responsável por qual tipo?"
+    BlockType getType(); // "eu sou responsável por qual tipo?"
 }
 ```
 
@@ -245,74 +384,6 @@ ConfigValueResolver.resolveNumber(configValue, context)
 ```
 
 Esse utilitário é compartilhado entre `ModBlockExecutor`, `ConditionBlockExecutor` e `IncrementBlockExecutor` — extraído para evitar duplicação.
-
----
-
-## API REST
-
-### Endpoints disponíveis
-
-#### `POST /flows` — Criar um flow
-
-Recebe a definição completa do workflow em JSON e persiste no banco.
-
-**Validações:**
-- `id`, `name` e `startBlockId` são obrigatórios
-- A lista de `blocks` não pode ser vazia
-- O `startBlockId` deve referenciar um `id` existente na lista de blocks
-
-**Resposta de sucesso:** `201 Created`
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "Prime Number Validation Flow",
-  "startBlockId": "11111111-1111-1111-1111-111111111111",
-  "blockCount": 7,
-  "createdAt": "2026-05-22T00:00:00"
-}
-```
-
----
-
-#### `POST /flows/{flowId}/execute` — Executar um flow
-
-Busca o flow no banco e executa a engine com as variáveis de entrada.
-
-**Request body:** um JSON com as variáveis iniciais da execução.
-```json
-{ "input": 17 }
-```
-
-**Resposta de sucesso:** `200 OK`
-```json
-{
-  "flowId": "550e8400-e29b-41d4-a716-446655440000",
-  "flowName": "Prime Number Validation Flow",
-  "output": { "result": true }
-}
-```
-
----
-
-### Tratamento de erros
-
-Todos os erros seguem um formato padronizado via `GlobalExceptionHandler`:
-
-| Situação | HTTP |
-|---|---|
-| Campo obrigatório ausente ou inválido | `400 Bad Request` |
-| `flowId` não encontrado no banco | `404 Not Found` |
-| `startBlockId` não existe nos blocks | `422 Unprocessable Entity` |
-| Erro inesperado | `500 Internal Server Error` |
-
-```json
-{
-  "status": 404,
-  "error": "Not Found",
-  "message": "Flow not found with id: 550e8400-...",
-  "timestamp": "2026-05-22T00:00:00"
-}
-```
 
 ---
 
@@ -388,17 +459,3 @@ O profile `test` usa H2 com `ddl-auto: create-drop` — o schema é criado antes
 
 ---
 
-## Docker (banco de produção)
-
-Para rodar com PostgreSQL real:
-
-```bash
-# Subir o banco
-docker-compose up -d
-
-# A aplicação continua usando H2 por padrão
-# Para apontar pro Postgres, configurar as variáveis de ambiente:
-# DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
-```
-
-O `docker-compose.yml` sobe um PostgreSQL 16 com healthcheck, volume persistente e as credenciais padrão (`flownocode/flownocode`).
