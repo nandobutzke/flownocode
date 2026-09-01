@@ -39,11 +39,33 @@ class EndBlockExecutorTest {
     }
 
     @Test
+    void shouldResolveResultFromContextVariable() {
+        Block block = block("modelOutput");
+        ExecutionContext context = new ExecutionContext(Map.of(
+                "modelOutput", "seventeen is prime"
+        ));
+
+        executor.execute(block, context);
+
+        assertEquals("seventeen is prime", context.getResult());
+    }
+
+    @Test
+    void shouldKeepLiteralStringWhenContextHasNoSuchVariable() {
+        Block block = block("done");
+        ExecutionContext context = new ExecutionContext(Map.of());
+
+        executor.execute(block, context);
+
+        assertEquals("done", context.getResult());
+    }
+
+    @Test
     void shouldSupportEndType() {
         assertEquals(BlockType.END, executor.getType());
     }
 
-    private Block block(boolean result) {
+    private Block block(Object result) {
         Block block = new Block();
         block.setId(UUID.randomUUID());
         block.setType(BlockType.END);

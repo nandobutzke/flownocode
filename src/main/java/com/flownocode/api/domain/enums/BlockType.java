@@ -12,5 +12,7 @@ public enum BlockType {
     MOD,
     CONDITION,
     INCREMENT,
+    PROMPT_TEMPLATE,
+    BEDROCK_INVOKE,
     END
 }

@@ -4,6 +4,7 @@ import com.flownocode.api.domain.Block;
 import com.flownocode.api.domain.enums.BlockType;
 import com.flownocode.api.engine.BlockExecutor;
 import com.flownocode.api.engine.BlockResult;
+import com.flownocode.api.engine.ConfigValueResolver;
 import com.flownocode.api.engine.ExecutionContext;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +13,8 @@ public class EndBlockExecutor implements BlockExecutor {
 
     @Override
     public BlockResult execute(Block block, ExecutionContext context) {
-        context.setResult(block.getConfig().get("result"));
+        Object configured = block.getConfig().get("result");
+        context.setResult(ConfigValueResolver.resolve(configured, context));
         return BlockResult.stop();
     }
 
