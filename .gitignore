@@ -34,4 +34,10 @@ Thumbs.db
 logs/
 
 # Docker volumes
-docker/postgres/data/
+backend/docker/postgres/data/
+
+# Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/

@@ -1,47 +1,56 @@
 # flow-no-code
 
-API REST de **Workflow Engine** desenvolvida em Java 17 com Spring Boot 3.
+Monorepo de um **Workflow Engine** no estilo n8n: a API Java descreve e executa flows como JSON; o frontend Next.js monta o grafo visualmente e só então chama `POST /flows` e `POST /flows/{id}/execute`.
 
-A proposta central do projeto é permitir que um fluxo de execução lógica seja descrito como dados — um JSON — e executado dinamicamente pela engine.
+| Pasta | Stack |
+|---|---|
+| [`backend/`](backend/) | Java 17 + Spring Boot 3 — engine, persistência, Bedrock |
+| [`frontend/`](frontend/) | React 19 + Next.js — editor dark, XYFlow, draft no `localStorage` |
+
+O browser fala só com o Next (`:3000`). Rewrites encaminham `/api/flows` para o Spring (`:8080`). A API não muda de contrato.
 
 ---
 
-## Inicialização com Docker
+## Como rodar
 
-> **Pré-requisitos:** Docker e Docker Compose instalados.
+### Frontend (editor)
 
-O `docker-compose.yml` sobe **dois serviços** juntos — não é necessário rodar a API manualmente:
+```bash
+cd frontend
+cp .env.example .env   # API_URL=http://localhost:8080
+npm install
+npm run dev
+```
+
+Abre `http://localhost:3000`. Monte os blocos, **Save** (um `POST /flows`) e **Execute** (variáveis chave/valor). Depois do save o canvas fica somente leitura; **New** gera outros UUIDs.
+
+### Backend + Postgres (Docker)
+
+O `docker-compose.yml` na raiz sobe a API e o banco. O Next continua fora do compose.
 
 | Serviço | Container | Descrição |
 |---|---|---|
-| `api` | `flownocode-api` | API Java 17 + Spring Boot 3 (build via `docker/api/Dockerfile`, porta `8080`) |
+| `api` | `flownocode-api` | API Java 17 + Spring Boot 3 (`backend/docker/api/Dockerfile`, porta `8080`) |
 | `postgres` | `flownocode-postgres` | PostgreSQL 16 (porta `5432`, volume persistente) |
 
-A API usa o profile `docker` (`application-docker.yml`) e só inicia depois que o Postgres estiver saudável (`depends_on` + healthcheck).
-
 ```bash
-# Subir API + PostgreSQL com um único comando
 docker compose up --build
 ```
-
-Aguarde o build da imagem e a mensagem `Started FlowNoCodeApplication`. A API estará disponível em:
 
 | URL | O que é |
 |---|---|
 | `http://localhost:8080/swagger-ui.html` | Documentação interativa (Swagger) |
 | `http://localhost:8080/api-docs` | Spec OpenAPI em JSON |
 
-Para parar os containers:
-
 ```bash
 docker compose down
 ```
 
-> Para rodar **sem Docker** (banco H2 em memória, zero configuração):
+> API **sem Docker** (H2 em memória):
 > ```bash
-> mvn spring-boot:run
+> cd backend && mvn spring-boot:run
 > ```
-> Também disponibiliza o console H2 em `http://localhost:8080/h2-console`.
+> Console H2: `http://localhost:8080/h2-console`.
 
 ---
 
@@ -206,28 +215,25 @@ Busca o flow salvo e executa a engine com as variáveis de entrada fornecidas.
 ## Estrutura do projeto
 
 ```
-docker/
-├── api/Dockerfile      → Build multi-stage da API (Java 17 + Spring Boot 3)
-└── postgres/Dockerfile → Imagem do PostgreSQL 16
+backend/
+├── docker/
+│   ├── api/Dockerfile      → Build multi-stage da API (Java 17 + Spring Boot 3)
+│   └── postgres/Dockerfile → Imagem do PostgreSQL 16
+├── docs/                   → Contexto AWS / diagrama
+└── src/main/java/com/flownocode/api/
+    ├── controller/         → Endpoints REST (entrada da API)
+    ├── service/            → Regras de negócio e orquestração
+    ├── domain/             → Entidades JPA (o que vai para o banco)
+    ├── dto/                → Request / response
+    ├── engine/             → Workflow engine + executors
+    ├── exception/          → Tratamento global de erros
+    ├── repository/         → Spring Data JPA
+    └── config/             → Swagger / Bedrock
 
-docker-compose.yml      → Serviços `api` e `postgres`
+frontend/
+└── src/                    → Editor Next.js (paleta, canvas, inspector, Save/Execute)
 
-src/main/java/com/flownocode/api/
-│
-├── controller/         → Endpoints REST (entrada da API)
-├── service/            → Regras de negócio e orquestração
-├── domain/             → Entidades JPA (o que vai para o banco)
-│   ├── base/           → BaseEntity com id, createdAt, updatedAt
-│   ├── converter/      → Conversor de Map<String,Object> para JSON no banco
-│   └── enums/          → BlockType (tipos de blocos disponíveis)
-├── dto/
-│   ├── request/        → O que a API recebe
-│   └── response/       → O que a API devolve
-├── engine/             → O coração do projeto: a workflow engine
-│   └── executor/       → Uma classe por tipo de bloco
-├── exception/          → Tratamento global de erros
-├── repository/         → Acesso ao banco via Spring Data JPA
-└── config/             → Configuração do Swagger/OpenAPI
+docker-compose.yml          → Serviços `api` e `postgres` (context em backend/)
 ```
 
 ---
@@ -463,10 +469,10 @@ retorna true  (não encontrou divisor → é primo)
 ## Estrutura de testes
 
 ```
-src/test/java/com/flownocode/api/
+backend/src/test/java/com/flownocode/api/
 └── FlowNoCodeApplicationTests.java   → Smoke test: contexto do Spring sobe sem erros
 
-src/test/resources/
+backend/src/test/resources/
 └── application-test.yml              → H2 com create-drop para testes isolados
 ```
 
