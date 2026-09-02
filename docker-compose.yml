@@ -3,7 +3,7 @@ version: "3.9"
 services:
   postgres:
     build:
-      context: ./docker/postgres
+      context: ./backend/docker/postgres
       dockerfile: Dockerfile
     container_name: flownocode-postgres
     restart: unless-stopped
@@ -24,7 +24,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./backend
       dockerfile: docker/api/Dockerfile
     container_name: flownocode-api
     restart: unless-stopped
