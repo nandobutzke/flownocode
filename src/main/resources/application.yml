@@ -42,3 +42,9 @@ logging:
   level:
     com.flownocode: DEBUG
     org.hibernate.SQL: INFO
+
+app:
+  bedrock:
+    model-id: amazon.nova-micro-v1:0
+    max-tokens: 256
+    region: us-east-1
